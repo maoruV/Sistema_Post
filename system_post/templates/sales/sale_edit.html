@@ -1,0 +1,181 @@
+{% extends 'layouts/base.html' %}
+{% load currency_tags %}
+{% block title %}Editar {{ sale.invoice_number }}{% endblock %}
+{% block content %}
+<div x-data="editApp()" x-init='loadItems({{ items_json|safe }})' class="max-w-6xl mx-auto animate-fade-in-up">
+    <h1 class="text-xl font-[var(--font-heading)] font-bold mb-6">Editar Venta {{ sale.invoice_number }}</h1>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="space-y-4">
+            <div class="card">
+                <div class="card-body">
+                    <label class="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2 block">Agregar Producto</label>
+                    <input type="text" x-model="search" @input.debounce.300ms="searchProducts" placeholder="SKU o nombre del producto..."
+                        class="form-input">
+                    <div x-show="results.length > 0" x-cloak class="mt-2 border border-[var(--border-color)] rounded-[var(--radius-md)] overflow-hidden max-h-48 overflow-y-auto">
+                        <template x-for="p in results" :key="p.id">
+                            <div class="product-search-result flex justify-between items-center" @click="addProduct(p)">
+                                <div>
+                                    <span class="font-medium text-sm" x-text="p.name"></span>
+                                    <span class="text-xs text-[var(--text-muted)] ml-2" x-text="p.sku"></span>
+                                </div>
+                                <div class="text-sm flex items-center gap-3">
+                                    <span class="text-[var(--accent)] font-semibold"><span x-text="formatPeso(p.price)"></span></span>
+                                    <span class="text-xs text-[var(--text-muted)]">Stock: <span x-text="p.stock"></span></span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div x-show="newItems.length > 0 || existingItems.length > 0">
+                    <div class="table-container overflow-x-auto">
+                        <table class="min-w-full">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th class="text-center">Cant</th>
+                                <th class="text-right">Precio</th>
+                                <th class="text-right">Subtotal</th>
+                                <th class="text-center w-16">Quitar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="item in existingItems" :key="'e'+item.id">
+                                <tr class="opacity-70">
+                                    <td>
+                                        <span class="font-medium text-sm" x-text="item.name"></span>
+                                        <span class="text-xs text-[var(--text-muted)] ml-1" x-text="item.sku"></span>
+                                        <span class="text-xs text-[var(--text-muted)] ml-1">(en venta)</span>
+                                    </td>
+                                    <td class="text-center"><span class="text-[var(--text-secondary)]" x-text="item.quantity"></span></td>
+                                    <td class="text-right"><span x-text="formatPeso(item.price)"></span></td>
+                                    <td class="text-right font-semibold"><span x-text="formatPeso(item.subtotal)"></span></td>
+                                    <td></td>
+                                </tr>
+                            </template>
+                            <template x-if="existingItems.length > 0 && newItems.length > 0">
+                                <tr><td colspan="5" class="border-t border-[var(--border-color)]"></td></tr>
+                            </template>
+                            <template x-for="(item, index) in newItems" :key="item.tempId">
+                                <tr>
+                                    <td>
+                                        <span class="font-medium text-sm" x-text="item.name"></span>
+                                        <span class="text-xs text-[var(--text-muted)] ml-1" x-text="item.sku"></span>
+                                    </td>
+                                    <td class="text-center">
+                                        <input type="number" x-model="item.quantity" @input="updateQty(index)" min="1"
+                                            class="w-16 text-center form-input text-sm py-1">
+                                    </td>
+                                    <td class="text-right"><span x-text="formatPeso(item.price)"></span></td>
+                                    <td class="text-right font-semibold"><span x-text="formatPeso(item.price * item.quantity)"></span></td>
+                                    <td class="text-center">
+                                        <button type="button" @click="removeItem(index)" aria-label="Eliminar producto" class="text-[var(--danger)] hover:text-red-400 text-lg leading-none">&times;</button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div x-show="newItems.length === 0 && existingItems.length === 0" class="empty-state">
+        <p class="text-sm">Usa el buscador para agregar más productos a esta venta.</p>
+    </div>
+</div>
+
+        <div class="space-y-4 sticky top-24 self-start">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="font-[var(--font-heading)] font-semibold text-sm mb-4">Resumen</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-baseline">
+                            <span class="text-sm text-[var(--text-secondary)]">Total actual</span>
+                            <span class="font-semibold">{{ sale.total|pesos }}</span>
+                        </div>
+                        <div class="flex justify-between items-baseline">
+                            <span class="text-sm text-[var(--text-secondary)]">Nuevos productos</span>
+                            <span class="font-semibold" x-text="formatPeso(newTotal())"></span>
+                        </div>
+                        <hr class="border-[var(--border-color)]">
+                        <div class="flex justify-between items-baseline">
+                            <span class="font-bold text-base">Nuevo total</span>
+                            <span class="text-xl font-[var(--font-heading)] font-bold text-[var(--accent)]"><span x-text="formatPeso({{ sale.total }} + newTotal())"></span></span>
+                        </div>
+                        <form method="post" action="{% url 'sales:sale_edit_save' sale.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="items_data" x-bind:value="itemsData()">
+                            <button type="submit" :disabled="newItems.length === 0"
+                                class="btn btn-primary w-full justify-center py-2.5 disabled:opacity-40 disabled:cursor-not-allowed mt-2">
+                                Guardar Cambios
+                            </button>
+                        </form>
+                        <a href="{% url 'sales:sale_detail' sale.pk %}" class="btn btn-secondary w-full justify-center py-2">Cancelar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function formatPeso(value) {
+    return '$' + Number(value).toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+}
+let tempIdCounter = 0;
+function editApp() {
+    return {
+        search: '',
+        results: [],
+        existingItems: [],
+        newItems: [],
+        loadItems(items) {
+            this.existingItems = items;
+        },
+        async searchProducts() {
+            if (this.search.length < 1) { this.results = []; return; }
+            const resp = await fetch(`/inventory/products/search/?q=${this.search}&format=json`);
+            this.results = await resp.json();
+        },
+        addProduct(product) {
+            if (this.newItems.find(i => i.id === product.id)) {
+                const idx = this.newItems.findIndex(i => i.id === product.id);
+                this.newItems[idx].quantity++;
+                this.search = '';
+                this.results = [];
+                return;
+            }
+            tempIdCounter++;
+            this.newItems.push({
+                tempId: tempIdCounter,
+                id: product.id,
+                name: product.name,
+                sku: product.sku,
+                price: product.price,
+                quantity: 1,
+                stock: product.stock
+            });
+            this.search = '';
+            this.results = [];
+        },
+        removeItem(index) {
+            this.newItems.splice(index, 1);
+        },
+        updateQty(index) {
+            const item = this.newItems[index];
+            if (item.quantity < 1) item.quantity = 1;
+        },
+        newTotal() {
+            return this.newItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        },
+        itemsData() {
+            return JSON.stringify({
+                items: this.newItems.map(i => ({product_id: i.id, quantity: i.quantity, unit_price: i.price}))
+            });
+        }
+    }
+}
+</script>
+{% endblock %}

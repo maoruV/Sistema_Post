@@ -1,0 +1,46 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Clientes{% endblock %}
+{% block content %}
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 stagger">
+    <h1 class="text-xl font-[var(--font-heading)] font-bold">Clientes</h1>
+    {% if user.can_update %}
+    <a href="{% url 'clients:client_create' %}" class="btn btn-primary btn-sm">+ Nuevo Cliente</a>
+    {% endif %}
+</div>
+<div class="table-container stagger">
+    <table>
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th class="hidden sm:table-cell">Email</th>
+                <th class="hidden md:table-cell">Teléfono</th>
+                <th class="hidden lg:table-cell">CC</th>
+                <th class="text-right">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in clients %}
+            <tr>
+                <td class="font-medium">{{ c.name }}</td>
+                <td class="hidden sm:table-cell text-[var(--text-secondary)]">{{ c.email|default:'—' }}</td>
+                <td class="hidden md:table-cell">{{ c.phone }}</td>
+                <td class="hidden lg:table-cell text-[var(--text-secondary)]">{{ c.cc|default:'—' }}</td>
+                <td class="text-right">
+                    {% if user.can_update %}
+                    <a href="{% url 'clients:client_update' c.pk %}"
+                        class="text-sm text-[var(--accent)] hover:underline mr-2">Editar</a>
+                    <a href="{% url 'clients:client_delete' c.pk %}"
+                        class="text-sm text-[var(--danger)] hover:underline">Eliminar</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="empty-state">No hay clientes.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% include 'components/pagination.html' %}
+{% endblock %}

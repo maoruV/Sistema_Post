@@ -1,0 +1,28 @@
+{% load currency_tags %}
+{% if page_obj.paginator.num_pages > 1 %}
+<div class="flex items-center justify-between mt-4 text-sm">
+    <p class="text-[var(--text-secondary)]">
+        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+        <span class="text-[var(--text-muted)]">({{ page_obj.paginator.count }} registros)</span>
+    </p>
+    <div class="flex items-center gap-1">
+        {% if page_obj.has_previous %}
+        <a href="?{% url_replace page=1 %}" class="btn btn-ghost btn-sm" title="Primera">&laquo;&laquo;</a>
+        <a href="?{% url_replace page=page_obj.previous_page_number %}" class="btn btn-ghost btn-sm" title="Anterior">&laquo;</a>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+            {% if num == page_obj.number %}
+            <span class="px-3 py-1.5 rounded-[var(--radius-sm)] bg-[var(--accent-light)] text-[var(--accent)] font-semibold text-sm">{{ num }}</span>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <a href="?{% url_replace page=num %}" class="px-3 py-1.5 rounded-[var(--radius-sm)] text-[var(--text-secondary)] hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)] transition-all">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <a href="?{% url_replace page=page_obj.next_page_number %}" class="btn btn-ghost btn-sm" title="Siguiente">&raquo;</a>
+        <a href="?{% url_replace page=page_obj.paginator.num_pages %}" class="btn btn-ghost btn-sm" title="Última">&raquo;&raquo;</a>
+        {% endif %}
+    </div>
+</div>
+{% endif %}

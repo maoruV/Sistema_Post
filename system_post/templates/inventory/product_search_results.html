@@ -1,0 +1,23 @@
+{% for p in products %}
+<tr>
+    <td class="font-mono text-xs text-[var(--text-secondary)]">{{ p.sku }}</td>
+    <td class="font-medium">{{ p.name }}</td>
+    <td class="hidden md:table-cell text-[var(--text-secondary)]">{{ p.category.name|default:'—' }}</td>
+    <td class="text-right font-medium">{{ p.price|pesos }}</td>
+    <td class="text-right">
+        <span class="{% if p.is_low_stock %}text-[var(--danger)] font-bold{% else %}text-[var(--text-primary)]{% endif %}">{{ p.stock }}</span>
+    </td>
+    <td class="text-center hidden sm:table-cell">
+        {% if p.is_active %}<span class="badge badge-emerald">Activo</span>
+        {% else %}<span class="badge badge-red">Inactivo</span>{% endif %}
+    </td>
+    <td class="text-right">
+        {% if user.can_update %}
+        <a href="{% url 'inventory:product_update' p.pk %}" class="text-sm text-[var(--accent)] hover:underline mr-2">Editar</a>
+        <a href="{% url 'inventory:product_delete' p.pk %}" class="text-sm text-[var(--danger)] hover:underline">Eliminar</a>
+        {% endif %}
+    </td>
+</tr>
+{% empty %}
+<tr><td colspan="7" class="empty-state">Sin resultados.</td></tr>
+{% endfor %}

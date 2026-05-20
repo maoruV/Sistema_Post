@@ -1,0 +1,87 @@
+{% extends 'layouts/base.html' %}
+{% load currency_tags %}
+{% block title %}Venta {{ sale.invoice_number }}{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto animate-fade-in-up">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div>
+            <h1 class="text-xl font-[var(--font-heading)] font-bold">Venta {{ sale.invoice_number }}</h1>
+            <p class="text-sm text-[var(--text-secondary)]">{{ sale.date|date:'d/m/Y H:i' }}</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="{% url 'sales:sale_invoice' sale.pk %}" class="btn btn-secondary btn-sm">Ver Factura</a>
+            {% if sale.is_active and sale.status == 'pendiente' %}
+            <a href="{% url 'sales:sale_collect' sale.pk %}" class="btn btn-primary btn-sm">Cobrar Venta</a>
+            <a href="{% url 'sales:sale_edit' sale.pk %}" class="btn btn-secondary btn-sm">Editar</a>
+            {% endif %}
+            {% if sale.is_active and sale.status == 'pendiente' and user.is_admin %}
+            <a href="{% url 'sales:sale_cancel' sale.pk %}" class="btn btn-danger btn-sm">Cancelar Venta</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 stagger">
+        <div class="card">
+            <div class="card-body">
+                <p class="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold mb-1">Cliente</p>
+                <p class="font-medium">{{ sale.client.name|default:'Invitado' }}</p>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <p class="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold mb-1">Vendedor</p>
+                <p class="font-medium">{{ sale.user.get_full_name|default:sale.user.username }}</p>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <p class="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold mb-1">Estado</p>
+                <p class="font-medium">
+                    {% if not sale.is_active %}
+                    <span class="badge badge-red">Cancelada</span>
+                    {% elif sale.status == 'pagada' %}
+                    <span class="badge badge-emerald">Pagada</span>
+                    {% else %}
+                    <span class="badge badge-amber">Pendiente</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th class="text-center">Cantidad</th>
+                    <th class="text-right">Precio</th>
+                    <th class="text-right">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td class="font-medium">{{ item.product.name }}</td>
+                    <td class="text-center">{{ item.quantity }}</td>
+                    <td class="text-right">{{ item.unit_price|pesos }}</td>
+                    <td class="text-right font-semibold">{{ item.subtotal|pesos }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                {% if sale.tax > 0 %}
+                <tr class="table-tfoot">
+                    <td colspan="3" class="text-right text-sm text-[var(--text-secondary)]">IVA (16%):</td>
+                    <td class="text-right text-sm">{{ sale.tax|pesos }}</td>
+                </tr>
+                {% endif %}
+                <tr class="table-tfoot">
+                    <td colspan="3" class="text-right font-bold text-base">Total:</td>
+                    <td class="text-right font-bold text-lg text-[var(--accent)]">{{ sale.total|pesos }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+{% endblock %}

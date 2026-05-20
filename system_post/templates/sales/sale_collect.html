@@ -1,0 +1,125 @@
+{% extends 'layouts/base.html' %}
+{% load currency_tags %}
+{% block title %}Cobrar {{ sale.invoice_number }}{% endblock %}
+{% block content %}
+<div x-data="collectApp()" x-init="totalVal = {{ sale.total }}" class="max-w-4xl mx-auto animate-fade-in-up">
+    <div class="flex justify-between items-start mb-6">
+        <div>
+            <h1 class="text-xl font-[var(--font-heading)] font-bold">Cobrar Venta {{ sale.invoice_number }}</h1>
+            <p class="text-sm text-[var(--text-secondary)]">{{ sale.date|date:'d/m/Y H:i' }}</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="card">
+            <div class="card-body">
+                <p class="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold mb-1">Cliente</p>
+                <p class="font-medium">{{ sale.client.name|default:'Invitado' }}</p>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <p class="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold mb-1">Estado</p>
+                <span class="badge badge-amber">Pendiente</span>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <p class="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold mb-1">Total a cobrar</p>
+                <p class="text-2xl font-[var(--font-heading)] font-bold text-[var(--accent)]">{{ sale.total|pesos }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 card">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th class="text-center">Cant</th>
+                            <th class="text-right">Precio</th>
+                            <th class="text-right">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td class="font-medium">{{ item.product.name }}</td>
+                            <td class="text-center">{{ item.quantity }}</td>
+                            <td class="text-right">{{ item.unit_price|pesos }}</td>
+                            <td class="text-right font-semibold">{{ item.subtotal|pesos }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-tfoot">
+                            <td colspan="3" class="text-right font-bold text-base">Total:</td>
+                            <td class="text-right font-bold text-lg text-[var(--accent)]">{{ sale.total|pesos }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <div>
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="font-[var(--font-heading)] font-semibold text-sm mb-4">Finalizar Cobro</h3>
+                    <form method="post" action="{% url 'sales:sale_collect_save' sale.pk %}">
+                        {% csrf_token %}
+                        <div class="space-y-3">
+                            <div>
+                                <label>Método de pago</label>
+                                <select name="payment_method" x-model="paymentMethod" class="form-input">
+                                    <option value="efectivo">Efectivo</option>
+                                    <option value="tarjeta">Tarjeta</option>
+                                    <option value="transferencia">Transferencia</option>
+                                </select>
+                            </div>
+                            <div x-show="paymentMethod === 'efectivo'" x-cloak>
+                                <label>¿Con cuánto paga?</label>
+                                <input type="number" name="amount_received" x-model="amountReceived" min="0" step="1" placeholder="0"
+                                    class="form-input text-lg font-semibold">
+                                <div x-show="amountReceived > 0 && amountReceived >= totalVal" class="mt-2 flex items-center gap-2 text-[var(--accent)] font-bold">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    Cambio: <span x-text="formatPeso(cambio())"></span>
+                                </div>
+                                <div x-show="amountReceived > 0 && amountReceived < totalVal" class="mt-2 text-[var(--danger)] text-sm font-medium">
+                                    Faltan <span x-text="formatPeso(faltante())"></span>
+                                </div>
+                            </div>
+                            <input type="hidden" name="change" x-bind:value="cambio()">
+                            <hr class="border-[var(--border-color)]">
+                            <button type="submit" :disabled="paymentMethod === 'efectivo' && (parseFloat(amountReceived) || 0) < totalVal"
+                                class="btn btn-primary w-full justify-center py-2.5 disabled:opacity-40 disabled:cursor-not-allowed">
+                                Cobrar Venta
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function formatPeso(value) {
+    return '$' + Number(value).toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+}
+function collectApp() {
+    return {
+        paymentMethod: 'efectivo',
+        amountReceived: '',
+        totalVal: 0,
+        cambio() {
+            return Math.max(0, (parseFloat(this.amountReceived) || 0) - this.totalVal);
+        },
+        faltante() {
+            return Math.max(0, this.totalVal - (parseFloat(this.amountReceived) || 0));
+        }
+    }
+}
+</script>
+{% endblock %}

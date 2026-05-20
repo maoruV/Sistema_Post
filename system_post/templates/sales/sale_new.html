@@ -1,0 +1,295 @@
+{% extends 'layouts/base.html' %}
+{% load currency_tags %}
+{% block title %}Nueva Venta{% endblock %}
+{% block content %}
+<div x-data="saleApp()" class="max-w-6xl mx-auto animate-fade-in-up">
+    <h1 class="text-xl font-[var(--font-heading)] font-bold mb-6">Nueva Venta</h1>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="space-y-4">
+            <div class="card">
+                <div class="card-body">
+                    <label
+                        class="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2 block">Buscar
+                        Producto</label>
+                    <input type="text" x-model="search" @input.debounce.300ms="searchProducts"
+                        placeholder="SKU o nombre del producto..." class="form-input">
+                    <div x-show="results.length > 0" x-cloak
+                        class="mt-2 border border-[var(--border-color)] rounded-[var(--radius-md)] overflow-hidden max-h-48 overflow-y-auto">
+                        <template x-for="p in results" :key="p.id">
+                            <div class="product-search-result flex justify-between items-center" @click="addProduct(p)">
+                                <div>
+                                    <span class="font-medium text-sm" x-text="p.name"></span>
+                                    <span class="text-xs text-[var(--text-muted)] ml-2" x-text="p.sku"></span>
+                                </div>
+                                <div class="text-sm flex items-center gap-3">
+                                    <span class="text-[var(--accent)] font-semibold"><span
+                                            x-text="formatPeso(p.price)"></span></span>
+                                    <span class="text-xs text-[var(--text-muted)]">Stock: <span
+                                            x-text="p.stock"></span></span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div x-show="items.length > 0">
+                    <div class="table-container overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th class="text-center">Cant</th>
+                                    <th class="text-right">Precio</th>
+                                    <th class="text-right">Subtotal</th>
+                                    <th class="text-center w-16"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template x-for="(item, index) in items" :key="item.id">
+                                    <tr>
+                                        <td>
+                                            <span class="font-medium text-sm" x-text="item.name"></span>
+                                            <span class="text-xs text-[var(--text-muted)] ml-1"
+                                                x-text="item.sku"></span>
+                                        </td>
+                                        <td class="text-center">
+                                            <input type="number" x-model="item.quantity" @input="updateQty(index)"
+                                                min="1" :max="item.stock"
+                                                class="w-16 text-center form-input text-sm py-1">
+                                        </td>
+                                        <td class="text-right"><span x-text="formatPeso(item.price)"></span></td>
+                                        <td class="text-right font-semibold"><span
+                                                x-text="formatPeso(item.price * item.quantity)"></span></td>
+                                        <td class="text-center">
+                                            <button type="button" @click="removeItem(index)"
+                                                aria-label="Eliminar producto"
+                                                class="text-[var(--danger)] hover:text-red-400 text-lg leading-none">&times;</button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div x-show="items.length === 0" class="empty-state">
+                <svg class="w-12 h-12 mx-auto mb-3 text-[var(--text-muted)]" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                        d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125l2.25 2.25m0 0l2.25 2.25M12 11.625l2.25-2.25M12 11.625l-2.25 2.25M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                </svg>
+                <p class="text-sm">Agrega productos usando el buscador</p>
+            </div>
+        </div>
+
+        <div class="space-y-4 sticky top-24 self-start">
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="font-[var(--font-heading)] font-semibold text-sm mb-4">Resumen de Venta</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label>Cliente</label>
+                            <div class="relative" x-data="{ open: false }">
+                                <input type="text" x-model="clientQuery" @input.debounce.300ms="searchClients"
+                                    @focus="open = clientResults.length > 0" @click.away="open = false"
+                                    placeholder="Buscar cliente..." class="form-input pr-8">
+                                <button type="button" x-show="clientId"
+                                    @click="clientId=''; clientQuery=''; clientResults=[]; open=false"
+                                    class="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)] text-lg leading-none">&times;</button>
+                                <div x-show="open && clientResults.length > 0" x-cloak
+                                    class="absolute z-20 mt-1 w-full bg-[var(--bg-elevated)] border border-[var(--border-color)] rounded-[var(--radius-md)] overflow-hidden shadow-lg">
+                                    <div class="px-3 py-2 text-xs text-[var(--text-muted)] cursor-pointer hover:bg-[var(--accent-light)] border-b border-[var(--border-color)]"
+                                        @click="clientId=''; clientQuery=''; clientResults=[]; open=false">
+                                        Invitado (sin cliente)
+                                    </div>
+                                    <template x-for="c in clientResults" :key="c.id">
+                                        <div class="px-3 py-2 text-sm cursor-pointer hover:bg-[var(--accent-light)] hover:text-[var(--accent)] border-b border-[var(--border-color)] last:border-b-0"
+                                            @click="clientId=c.id; clientQuery=c.text; clientResults=[]; open=false"
+                                            x-text="c.text">
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label>Método de pago</label>
+                            <select x-model="paymentMethod" class="form-input">
+                                <option value="efectivo">Efectivo</option>
+                                <option value="tarjeta">Tarjeta</option>
+                                <option value="transferencia">Transferencia</option>
+                            </select>
+                        </div>
+                        <div x-show="paymentMethod === 'efectivo'" x-cloak>
+                            <label>¿Con cuánto paga?</label>
+                            <input type="number" x-model="amountReceived" @input.debounce="onAmountInput" min="0"
+                                step="1" placeholder="0" class="form-input text-lg font-semibold">
+                            <div x-show="amountReceived > 0 && amountReceived >= totalWithIva()"
+                                class="mt-2 flex items-center gap-2 text-[var(--accent)] font-bold">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Cambio: <span x-text="formatPeso(cambio())"></span>
+                            </div>
+                            <div x-show="amountReceived > 0 && amountReceived < totalWithIva()"
+                                class="mt-2 text-[var(--danger)] text-sm font-medium">
+                                Faltan <span x-text="formatPeso(faltante())"></span>
+                            </div>
+                        </div>
+                        <label class="flex items-center gap-2 cursor-pointer pt-1">
+                            <input type="checkbox" x-model="applyIva" class="w-4 h-4 rounded accent-[var(--accent)]">
+                            <span class="text-sm font-medium text-[var(--text-secondary)]">Aplicar IVA (16%)</span>
+                        </label>
+                        <hr class="border-[var(--border-color)]">
+                        <div class="flex justify-between items-baseline">
+                            <span class="text-sm text-[var(--text-secondary)]">Artículos</span>
+                            <span class="text-sm" x-text="itemCount()"></span>
+                        </div>
+                        <div x-show="applyIva" x-cloak class="flex justify-between items-baseline text-sm">
+                            <span class="text-[var(--text-secondary)]">IVA (16%)</span>
+                            <span class="text-[var(--text-secondary)]"><span x-text="formatPeso(iva())"></span></span>
+                        </div>
+                        <div class="flex justify-between items-baseline">
+                            <span class="font-bold text-base">Total</span>
+                            <span class="text-xl font-[var(--font-heading)] font-bold text-[var(--accent)]"><span
+                                    x-text="formatPeso(totalWithIva())"></span></span>
+                        </div>
+                        <template x-if="clientId">
+                            <div class="grid grid-cols-2 gap-2">
+                                <button @click="doPending()" :disabled="items.length === 0"
+                                    class="btn btn-secondary w-full justify-center py-2.5 disabled:opacity-40 disabled:cursor-not-allowed text-sm">
+                                    Pendiente
+                                </button>
+                                <button @click="doPay()" :disabled="!canSubmit()"
+                                    class="btn btn-primary w-full justify-center py-2.5 disabled:opacity-40 disabled:cursor-not-allowed text-sm">
+                                    Cobrar Venta
+                                </button>
+                            </div>
+                        </template>
+                        <template x-if="!clientId">
+                            <button @click="doPay()" :disabled="!canSubmit()"
+                                class="btn btn-primary w-full justify-center py-2.5 disabled:opacity-40 disabled:cursor-not-allowed">
+                                Cobrar Venta
+                            </button>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function formatPeso(value) {
+        return '$' + Number(value).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+    function saleApp() {
+        return {
+            search: '',
+            results: [],
+            items: [],
+            clientId: '',
+            clientQuery: '',
+            clientResults: [],
+            paymentMethod: 'efectivo',
+            amountReceived: '',
+            applyIva: false,
+            async searchClients() {
+                if (this.clientQuery.length < 1) { this.clientId = ''; this.clientResults = []; return; }
+                const resp = await fetch(`/clients/search/?q=${this.clientQuery}`);
+                this.clientResults = await resp.json();
+            },
+            async searchProducts() {
+                if (this.search.length < 1) { this.results = []; return; }
+                const resp = await fetch(`/inventory/products/search/?q=${this.search}&format=json`);
+                this.results = await resp.json();
+            },
+            async addProduct(product) {
+                if (this.items.find(i => i.id === product.id)) {
+                    const idx = this.items.findIndex(i => i.id === product.id);
+                    if (this.items[idx].quantity < product.stock) this.items[idx].quantity++;
+                    this.search = '';
+                    this.results = [];
+                    return;
+                }
+                const resp = await fetch('/sales/add-item/', {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ product_id: product.id, quantity: 1 })
+                });
+                const data = await resp.json();
+                if (data.error) { alert(data.error); return; }
+                this.items.push(data);
+                this.search = '';
+                this.results = [];
+            },
+            removeItem(index) {
+                this.items.splice(index, 1);
+            },
+            updateQty(index) {
+                const item = this.items[index];
+                if (item.quantity < 1) item.quantity = 1;
+                if (item.quantity > item.stock) item.quantity = item.stock;
+            },
+            subtotal() {
+                return this.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            },
+            iva() {
+                return this.applyIva ? this.subtotal() * 0.16 : 0;
+            },
+            totalWithIva() {
+                return this.subtotal() + this.iva();
+            },
+            itemCount() {
+                return this.items.reduce((sum, item) => sum + item.quantity, 0);
+            },
+            cambio() {
+                return Math.max(0, (parseFloat(this.amountReceived) || 0) - this.totalWithIva());
+            },
+            faltante() {
+                return Math.max(0, this.totalWithIva() - (parseFloat(this.amountReceived) || 0));
+            },
+            canSubmit() {
+                if (this.items.length === 0) return false;
+                if (this.paymentMethod === 'efectivo' && (parseFloat(this.amountReceived) || 0) < this.totalWithIva()) return false;
+                return true;
+            },
+            doPending() {
+                this.paymentMethod = 'pendiente';
+                this.submitSale('pendiente');
+            },
+            doPay() {
+                this.submitSale('pagada');
+            },
+            submitSale(status) {
+                if (this.items.length === 0) return;
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/sales/complete/';
+                const csrf = document.createElement('input');
+                csrf.type = 'hidden';
+                csrf.name = 'csrfmiddlewaretoken';
+                csrf.value = '{{ csrf_token }}';
+                form.appendChild(csrf);
+                const data = document.createElement('input');
+                data.type = 'hidden';
+                data.name = 'sale_data';
+                data.value = JSON.stringify({
+                    items: this.items.map(i => ({ product_id: i.id, quantity: i.quantity, unit_price: i.price })),
+                    client_id: this.clientId,
+                    payment_method: this.paymentMethod,
+                    status: status,
+                    amount_received: parseFloat(this.amountReceived) || 0,
+                    apply_iva: this.applyIva
+                });
+                form.appendChild(data);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+    }
+</script>
+{% endblock %}

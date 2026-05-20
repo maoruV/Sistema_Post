@@ -1,0 +1,279 @@
+{% extends 'layouts/base.html' %}
+{% load currency_tags %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="mb-8 stagger">
+    <h1 class="text-2xl font-[var(--font-heading)] font-bold text-[var(--text-primary)]">Dashboard</h1>
+    <p class="text-[var(--text-secondary)] mt-1">Bienvenido, {{ user.get_full_name|default:user.username }}</p>
+</div>
+
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 stagger">
+    <div class="stat-card emerald">
+        <div class="flex items-start justify-between mb-3">
+            <div class="stat-card-icon stat-icon-emerald">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+        </div>
+        <p class="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Ventas Hoy</p>
+        <p class="stat-card-value text-[var(--accent)]">{{ today_sales_total|pesos }}</p>
+        <p class="text-xs text-[var(--text-secondary)] mt-1">{{ today_sales_count }} transacciones</p>
+    </div>
+    <div class="stat-card blue">
+        <div class="flex items-start justify-between mb-3">
+            <div class="stat-card-icon stat-icon-blue">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                </svg>
+            </div>
+        </div>
+        <p class="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Productos</p>
+        <p class="stat-card-value text-[var(--info)]">{{ total_products }}</p>
+        <p
+            class="text-xs {% if low_stock_products > 0 %}text-[var(--danger)]{% else %}text-[var(--text-secondary)]{% endif %} mt-1">
+            {% if low_stock_products > 0 %}{{ low_stock_products }} con stock bajo{% else %}Stock normal{% endif %}
+        </p>
+    </div>
+    <div class="stat-card purple">
+        <div class="flex items-start justify-between mb-3">
+            <div class="stat-card-icon stat-icon-purple">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                </svg>
+            </div>
+        </div>
+        <p class="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Clientes</p>
+        <p class="stat-card-value text-[var(--purple)]">{{ total_clients }}</p>
+    </div>
+    <div class="stat-card orange">
+        <div class="flex items-start justify-between mb-3">
+            <div class="stat-card-icon stat-icon-orange">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z" />
+                </svg>
+            </div>
+        </div>
+        <p class="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Proveedores</p>
+        <p class="stat-card-value text-[var(--orange)]">{{ total_suppliers }}</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 stagger">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="font-[var(--font-heading)] font-semibold text-sm">Ventas Recientes</h3>
+            <a href="{% url 'sales:sale_list' %}" class="text-xs text-[var(--accent)] hover:underline">Ver todas</a>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Folio</th>
+                        <th>Cliente</th>
+                        <th class="text-right">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in recent_sales %}
+                    <tr>
+                        <td class="font-mono text-xs text-[var(--text-secondary)]">{{ s.invoice_number }}</td>
+                        <td>{{ s.client.name|default:'Invitado' }}</td>
+                        <td class="text-right font-semibold">{{ s.total|pesos }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="empty-state">Sin ventas recientes.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <h3 class="font-[var(--font-heading)] font-semibold text-sm">Acceso Rápido</h3>
+        </div>
+        <div class="card-body">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                <!-- Nueva Venta -->
+                <a href="{% url 'sales:sale_new' %}" class="quick-card quick-card-lg quick-card-emerald
+                  transition-all duration-300 hover:scale-[1.02]">
+
+                    <div class="quick-card-icon stat-icon-emerald shrink-0">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                    </div>
+
+                    <div class="flex-1">
+                        <p class="text-sm font-semibold text-[var(--text-primary)]">
+                            Nueva Venta
+                        </p>
+
+                        <p class="text-xs text-[var(--text-secondary)] mt-1">
+                            Ir al punto de venta
+                        </p>
+                    </div>
+
+                    <svg class="quick-card-arrow w-5 h-5 shrink-0" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </a>
+
+                <!-- Inventario -->
+                <a href="{% url 'inventory:product_list' %}" class="quick-card quick-card-lg quick-card-blue
+                  transition-all duration-300 hover:scale-[1.02]">
+
+                    <div class="quick-card-icon stat-icon-blue shrink-0">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4" />
+                        </svg>
+                    </div>
+
+                    <div class="flex-1">
+                        <p class="text-sm font-semibold text-[var(--text-primary)]">
+                            Inventario
+                        </p>
+
+                        <p class="text-xs text-[var(--text-secondary)] mt-1">
+                            Gestionar productos
+                        </p>
+                    </div>
+
+                    <svg class="quick-card-arrow w-5 h-5 shrink-0" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </a>
+
+                <!-- Clientes -->
+                <a href="{% url 'clients:client_list' %}" class="quick-card quick-card-lg quick-card-purple
+                  transition-all duration-300 hover:scale-[1.02]">
+
+                    <div class="quick-card-icon stat-icon-purple shrink-0">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M15 19.128a9.38 9.38 0 002.625.372" />
+                        </svg>
+                    </div>
+
+                    <div class="flex-1">
+                        <p class="text-sm font-semibold text-[var(--text-primary)]">
+                            Clientes
+                        </p>
+
+                        <p class="text-xs text-[var(--text-secondary)] mt-1">
+                            Base de clientes
+                        </p>
+                    </div>
+
+                    <svg class="quick-card-arrow w-5 h-5 shrink-0" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </a>
+
+                <!-- Proveedores -->
+                <a href="{% url 'suppliers:supplier_list' %}" class="quick-card quick-card-lg quick-card-orange
+                  transition-all duration-300 hover:scale-[1.02]">
+
+                    <div class="quick-card-icon stat-icon-orange shrink-0">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21" />
+                        </svg>
+                    </div>
+
+                    <div class="flex-1">
+                        <p class="text-sm font-semibold text-[var(--text-primary)]">
+                            Proveedores
+                        </p>
+
+                        <p class="text-xs text-[var(--text-secondary)] mt-1">
+                            Base de proveedores
+                        </p>
+                    </div>
+
+                    <svg class="quick-card-arrow w-5 h-5 shrink-0" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </a>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card stagger mt-8">
+    <div class="card-header">
+        <h3 class="font-[var(--font-heading)] font-semibold text-sm">Productos Más Vendidos</h3>
+        {% if top_category %}
+        <span class="text-xs px-2.5 py-1 rounded-full font-medium"
+              style="background:rgba(212,131,74,0.12);color:var(--accent);">
+            Categoría top: {{ top_category.product__category__name }} ({{ top_category.total_qty }} uds)
+        </span>
+        {% endif %}
+    </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th class="w-10">#</th>
+                    <th>Producto</th>
+                    <th class="hidden sm:table-cell">Categoría</th>
+                    <th class="text-right">Vendidos</th>
+                    {% if user.is_admin or user.is_supervisor %}
+                    <th class="text-right hidden md:table-cell">Ingresos</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in top_products %}
+                <tr>
+                    <td>
+                        {% if forloop.counter == 1 %}
+                        <span class="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold"
+                              style="background:linear-gradient(135deg,#fbbf24,#d97706);color:#1a1713;">1</span>
+                        {% elif forloop.counter == 2 %}
+                        <span class="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold"
+                              style="background:linear-gradient(135deg,#d1d5db,#9ca3af);color:#1a1713;">2</span>
+                        {% elif forloop.counter == 3 %}
+                        <span class="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold"
+                              style="background:linear-gradient(135deg,#d4a148,#b8860b);color:#1a1713;">3</span>
+                        {% else %}
+                        <span class="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold text-[var(--text-muted)]"
+                              style="background:var(--bg-surface);">{{ forloop.counter }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div>
+                            <p class="font-medium">{{ p.product__name }}</p>
+                            <p class="text-[10px] text-[var(--text-muted)] font-mono">{{ p.product__sku }}</p>
+                        </div>
+                    </td>
+                    <td class="hidden sm:table-cell text-[var(--text-secondary)]">{{ p.product__category__name|default:'—' }}</td>
+                    <td class="text-right font-semibold">{{ p.total_qty }}</td>
+                    {% if user.is_admin or user.is_supervisor %}
+                    <td class="text-right hidden md:table-cell font-semibold text-[var(--accent)]">{{ p.total_revenue|pesos }}</td>
+                    {% endif %}
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="empty-state">Aún no hay ventas para mostrar.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

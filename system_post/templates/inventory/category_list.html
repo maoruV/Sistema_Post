@@ -1,0 +1,38 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Categorías{% endblock %}
+{% block content %}
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 stagger">
+    <h1 class="text-xl font-[var(--font-heading)] font-bold">Categorías</h1>
+    {% if user.can_update %}
+    <a href="{% url 'inventory:category_create' %}" class="btn btn-primary btn-sm">+ Nueva Categoría</a>
+    {% endif %}
+</div>
+<div class="table-container stagger">
+    <table>
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th class="hidden md:table-cell">Descripción</th>
+                <th class="text-right">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cat in categories %}
+            <tr>
+                <td class="font-medium">{{ cat.name }}</td>
+                <td class="hidden md:table-cell text-[var(--text-secondary)]">{{ cat.description|truncatechars:80|default:'—' }}</td>
+                <td class="text-right">
+                    {% if user.can_update %}
+                    <a href="{% url 'inventory:category_update' cat.pk %}" class="text-sm text-[var(--accent)] hover:underline mr-2">Editar</a>
+                    <a href="{% url 'inventory:category_delete' cat.pk %}" class="text-sm text-[var(--danger)] hover:underline">Eliminar</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" class="empty-state">No hay categorías.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% include 'components/pagination.html' %}
+{% endblock %}

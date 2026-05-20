@@ -1,0 +1,107 @@
+{% extends 'layouts/base.html' %}
+{% load currency_tags %}
+{% block title %}Productos{% endblock %}
+{% block content %}
+<div x-data="productFilters()" x-init="filter()" class="animate-fade-in-up">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 stagger">
+        <h1 class="text-xl font-[var(--font-heading)] font-bold">Productos</h1>
+        {% if user.can_update %}
+        <a href="{% url 'inventory:product_create' %}" class="btn btn-primary btn-sm">+ Nuevo</a>
+        {% endif %}
+    </div>
+
+    <div class="flex flex-wrap gap-3 mb-4">
+        <input type="text" x-model="q" @input.debounce.300ms="filter" placeholder="Buscar por SKU, nombre o categoría..."
+            class="form-input w-full sm:w-56">
+        <select x-model="category" @change="filter" class="form-input w-auto min-w-[150px] text-sm">
+            <option value="">Todas las categorías</option>
+            {% for cat in categories %}
+            <option value="{{ cat.id }}">{{ cat.name }}</option>
+            {% endfor %}
+        </select>
+        <select x-model="is_active" @change="filter" class="form-input w-auto min-w-[130px] text-sm">
+            <option value="">Todos los estados</option>
+            <option value="activo">Activo</option>
+            <option value="inactivo">Inactivo</option>
+        </select>
+    </div>
+
+    <div class="table-container stagger">
+        <table>
+            <thead>
+                <tr>
+                    <th>SKU</th>
+                    <th>Nombre</th>
+                    <th class="hidden md:table-cell">Categoría</th>
+                    <th class="text-right">Precio</th>
+                    <th class="text-right">Stock</th>
+                    <th class="text-center hidden sm:table-cell">Estado</th>
+                    <th class="text-right">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <template x-for="p in products" :key="p.id">
+                    <tr>
+                        <td class="font-mono text-xs text-[var(--text-secondary)]" x-text="p.sku"></td>
+                        <td class="font-medium" x-text="p.name"></td>
+                        <td class="hidden md:table-cell text-[var(--text-secondary)]">
+                            <span x-text="p.category_name || '—'"></span>
+                        </td>
+                        <td class="text-right font-medium"><span x-text="formatPeso(p.price)"></span></td>
+                        <td class="text-right">
+                            <span :class="p.is_low_stock ? 'text-[var(--danger)] font-bold' : 'text-[var(--text-primary)]'" x-text="p.stock"></span>
+                        </td>
+                        <td class="text-center hidden sm:table-cell">
+                            <template x-if="p.is_active">
+                                <span class="badge badge-emerald">Activo</span>
+                            </template>
+                            <template x-if="!p.is_active">
+                                <span class="badge badge-red">Inactivo</span>
+                            </template>
+                        </td>
+                        <td class="text-right">
+                            {% if user.can_update %}
+                            <a :href="`/inventory/products/${p.id}/update/`" class="text-sm text-[var(--accent)] hover:underline mr-2">Editar</a>
+                            <a :href="`/inventory/products/${p.id}/delete/`" class="text-sm text-[var(--danger)] hover:underline">Eliminar</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </template>
+                <tr x-show="products.length === 0 && !loading">
+                    <td colspan="7" class="empty-state">No hay productos.</td>
+                </tr>
+                <tr x-show="loading">
+                    <td colspan="7" class="empty-state">Cargando...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function formatPeso(value) {
+    return '$' + Number(value).toLocaleString('es-CO', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+function productFilters() {
+    return {
+        q: '',
+        category: '',
+        is_active: '',
+        products: [],
+        loading: false,
+        async filter() {
+            this.loading = true;
+            try {
+                const params = new URLSearchParams({q: this.q, category: this.category, is_active: this.is_active, format: 'json'});
+                const resp = await fetch(`/inventory/products/search/?${params}`);
+                this.products = await resp.json();
+            } catch (e) {
+                console.error('Error al filtrar:', e);
+                this.products = [];
+            }
+            this.loading = false;
+        }
+    }
+}
+</script>
+{% endblock %}

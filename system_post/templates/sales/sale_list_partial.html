@@ -1,0 +1,49 @@
+{% load currency_tags %}
+<div class="table-container stagger">
+    <table>
+        <thead>
+            <tr>
+                <th>Folio</th>
+                <th>Fecha</th>
+                <th class="hidden sm:table-cell">Cliente</th>
+                <th class="hidden md:table-cell">Vendedor</th>
+                <th class="text-right">Total</th>
+                <th class="text-center">Estado</th>
+                <th class="text-right">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in sales %}
+            <tr>
+                <td class="font-mono text-xs text-[var(--text-secondary)]">{{ s.invoice_number }}</td>
+                <td class="text-[var(--text-secondary)]">{{ s.date|date:'d/m/Y H:i' }}</td>
+                <td class="hidden sm:table-cell">{{ s.client.name|default:'Invitado' }}</td>
+                <td class="hidden md:table-cell text-[var(--text-secondary)]">{{ s.user.get_full_name|default:s.user.username }}</td>
+                <td class="text-right font-semibold">{{ s.total|pesos }}</td>
+                <td class="text-center">
+                    {% if not s.is_active %}
+                    <span class="badge badge-red">Cancelada</span>
+                    {% elif s.status == 'pagada' %}
+                    <span class="badge badge-emerald">Pagada</span>
+                    {% else %}
+                    <span class="badge badge-amber">Pendiente</span>
+                    {% endif %}
+                </td>
+                <td class="text-right">
+                    <a href="{% url 'sales:sale_detail' s.pk %}" class="text-sm text-[var(--accent)] hover:underline mr-2">Ver</a>
+                    <a href="{% url 'sales:sale_invoice' s.pk %}" class="text-sm text-[var(--text-secondary)] hover:underline mr-2">Factura</a>
+                    {% if s.is_active and s.status == 'pendiente' %}
+                    <a href="{% url 'sales:sale_collect' s.pk %}" class="btn btn-primary btn-sm mr-1">Cobrar</a>
+                    {% endif %}
+                    {% if s.is_active and s.status == 'pendiente' and user.is_admin %}
+                    <a href="{% url 'sales:sale_cancel' s.pk %}" class="text-sm text-[var(--danger)] hover:underline">Cancelar</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7" class="empty-state">No hay ventas.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% include 'components/pagination.html' %}

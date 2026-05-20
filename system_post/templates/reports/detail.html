@@ -1,0 +1,140 @@
+{% extends 'layouts/base.html' %}
+{% load currency_tags %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 stagger">
+    <div>
+        <h1 class="text-xl font-[var(--font-heading)] font-bold">{{ title }}</h1>
+        <p class="text-sm text-[var(--text-secondary)]">{{ period }}</p>
+    </div>
+    <div class="flex gap-2">
+        {% if user.role != 'user' %}
+        <button onclick="window.print()" class="btn btn-primary btn-sm">Imprimir</button>
+        {% endif %}
+        <a href="{% url 'reports:dashboard' %}" class="btn btn-ghost btn-sm">Volver</a>
+    </div>
+</div>
+
+{% if user.role != 'user' %}
+<div class="flex flex-wrap items-center gap-2 mb-3 stagger">
+    <span class="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mr-1">Rápido:</span>
+    <a href="{% url 'reports:view' %}?preset=hoy" class="btn btn-sm btn-secondary">Hoy</a>
+    {% if user.is_admin or user.is_supervisor %}
+    <a href="{% url 'reports:view' %}?preset=semana" class="btn btn-sm btn-secondary">Semana</a>
+    <a href="{% url 'reports:view' %}?preset=mes" class="btn btn-sm btn-secondary">Mes</a>
+    {% endif %}
+    <a href="{% url 'reports:view' %}" class="btn btn-sm btn-ghost ml-auto">Limpiar filtro</a>
+</div>
+
+<div class="card mb-4 stagger">
+    <div class="card-header">
+        <span class="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Filtrar por rango de
+            fechas</span>
+    </div>
+    <div class="card-body">
+        <form method="get" class="flex flex-wrap gap-3 items-end">
+            <div>
+                <label>Desde</label>
+                <input type="date" name="date_from" value="{{ date_from }}" class="form-input w-auto">
+            </div>
+            <div>
+                <label>Hasta</label>
+                <input type="date" name="date_to" value="{{ date_to }}" class="form-input w-auto">
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 stagger">
+    <div class="stat-card emerald">
+        <p class="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Total Ventas</p>
+        <p class="stat-card-value text-[var(--accent)]">{{ data.total_sales|pesos }}</p>
+    </div>
+    <div class="stat-card blue">
+        <p class="text-xs font-medium text-[var(--text-muted)] uppercase tracking-wider">Cantidad de Ventas</p>
+        <p class="stat-card-value text-[var(--info)]">{{ data.count }}</p>
+    </div>
+</div>
+
+<div class="card mb-6 stagger">
+    <div class="card-header">
+        <h3 class="font-[var(--font-heading)] font-semibold text-sm">Desglose por Método de Pago</h3>
+    </div>
+    <div class="card-body">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="payment-card payment-card-cash">
+                <div class="quick-card-icon stat-icon-emerald">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold">Efectivo</p>
+                    <p class="payment-value">{{ data.payment_breakdown.efectivo.total|pesos }}</p>
+                    <p class="payment-count">{{ data.payment_breakdown.efectivo.count }} ventas</p>
+                </div>
+            </div>
+            <div class="payment-card payment-card-card">
+                <div class="quick-card-icon stat-icon-blue">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold">Tarjeta</p>
+                    <p class="payment-value">{{ data.payment_breakdown.tarjeta.total|pesos }}</p>
+                    <p class="payment-count">{{ data.payment_breakdown.tarjeta.count }} ventas</p>
+                </div>
+            </div>
+            <div class="payment-card payment-card-transfer">
+                <div class="quick-card-icon stat-icon-purple">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                            d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-xs text-[var(--text-muted)] uppercase tracking-wider font-semibold">Transferencia</p>
+                    <p class="payment-value">{{ data.payment_breakdown.transferencia.total|pesos }}</p>
+                    <p class="payment-count">{{ data.payment_breakdown.transferencia.count }} ventas</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="table-container stagger">
+    <table>
+        <thead>
+            <tr>
+                <th>Folio</th>
+                <th>Cliente</th>
+                <th class="hidden sm:table-cell">Fecha</th>
+                <th class="hidden md:table-cell">Vendedor</th>
+                <th class="text-right">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in sales %}
+            <tr>
+                <td class="font-mono text-xs text-[var(--text-secondary)]">{{ s.invoice_number }}</td>
+                <td>{{ s.client.name|default:'Invitado' }}</td>
+                <td class="hidden sm:table-cell text-[var(--text-secondary)]">{{ s.date|date:'d/m/Y H:i' }}</td>
+                <td class="hidden md:table-cell text-[var(--text-secondary)]">{{
+                    s.user.get_full_name|default:s.user.username }}</td>
+                <td class="text-right font-semibold">{{ s.total|pesos }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="empty-state">No hay ventas en este período.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% include 'components/pagination.html' %}
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends 'layouts/base.html' %}
+{% load currency_tags %}
+{% block title %}Factura {{ sale.invoice_number }}{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto animate-fade-in-up">
+    <div class="card p-6 md:p-8 no-print mb-4 text-center">
+        <p class="text-sm text-[var(--text-secondary)] mb-3">Esta página está en modo factura imprimible.</p>
+        <button onclick="window.print()" class="btn btn-primary">Imprimir Factura</button>
+    </div>
+
+    <div class="card p-6 md:p-8" style="background:var(--bg-secondary)">
+        <div class="flex justify-between items-start mb-8">
+            <div>
+                <h1 class="text-3xl font-[var(--font-heading)] font-bold text-[var(--accent)]">FACTURA</h1>
+                <p class="text-sm text-[var(--text-secondary)] mt-1">Folio: <span class="font-mono font-medium text-[var(--text-primary)]">{{ sale.invoice_number }}</span></p>
+            </div>
+            <div class="text-right text-sm text-[var(--text-secondary)]">
+                <p>{{ sale.date|date:'d/m/Y' }}</p>
+                <p>{{ sale.date|date:'H:i' }}</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4 text-sm mb-8 invoice-info-bar">
+            <div>
+                <p class="text-[var(--text-muted)] text-xs uppercase tracking-wider font-semibold mb-1">Cliente</p>
+                <p class="font-medium">{{ sale.client.name|default:'Invitado' }}</p>
+            </div>
+            <div class="text-center">
+                <p class="text-[var(--text-muted)] text-xs uppercase tracking-wider font-semibold mb-1">Estado</p>
+                <p class="font-medium">
+                    {% if not sale.is_active %}<span class="badge badge-red">Cancelada</span>
+                    {% elif sale.status == 'pagada' %}<span class="badge badge-emerald">Pagada</span>
+                    {% else %}<span class="badge badge-amber">Pendiente</span>{% endif %}
+                </p>
+            </div>
+            <div class="text-right">
+                <p class="text-[var(--text-muted)] text-xs uppercase tracking-wider font-semibold mb-1">Vendedor</p>
+                <p class="font-medium">{{ sale.user.get_full_name|default:sale.user.username }}</p>
+            </div>
+        </div>
+
+        <table class="invoice-table">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th class="text-center">Cant</th>
+                    <th class="text-right">Precio</th>
+                    <th class="text-right">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td style="font-weight:500">{{ item.product.name }}</td>
+                    <td class="text-center">{{ item.quantity }}</td>
+                    <td class="text-right">{{ item.unit_price|pesos }}</td>
+                    <td class="text-right font-semibold">{{ item.subtotal|pesos }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="text-right text-sm space-y-1">
+            <div class="flex justify-end gap-8">
+                <span class="text-[var(--text-secondary)]">Subtotal:</span>
+                <span class="w-24 text-right">{{ sale.subtotal|pesos }}</span>
+            </div>
+            {% if sale.tax > 0 %}
+            <div class="flex justify-end gap-8">
+                <span class="text-[var(--text-secondary)]">IVA (16%):</span>
+                <span class="w-24 text-right">{{ sale.tax|pesos }}</span>
+            </div>
+            {% endif %}
+            <div class="flex justify-end gap-8 text-lg font-bold pt-2" style="border-top:1px solid var(--border-color)">
+                <span>Total:</span>
+                <span class="w-24 text-right text-[var(--accent)]">{{ sale.total|pesos }}</span>
+            </div>
+            <p class="text-[var(--text-secondary)] text-xs mt-2">
+                Método de pago: <span class="font-medium text-[var(--text-primary)]">{{ sale.get_payment_method_display }}</span>
+            </p>
+            {% if sale.payment_method == 'efectivo' and sale.amount_received %}
+            <div class="flex justify-end gap-8 text-sm mt-2" style="border-top:1px dashed var(--border-color);padding-top:0.5rem">
+                <span class="text-[var(--text-secondary)]">Recibido:</span>
+                <span class="w-24 text-right font-medium">{{ sale.amount_received|pesos }}</span>
+            </div>
+            <div class="flex justify-end gap-8 text-sm">
+                <span class="text-[var(--text-secondary)]">Cambio:</span>
+                <span class="w-24 text-right font-semibold text-[var(--accent)]">{{ sale.change|pesos }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="text-center text-[var(--text-muted)] text-xs pt-6 mt-6" style="border-top:1px solid var(--border-color)">
+            <p class="font-medium text-sm text-[var(--text-secondary)]">Gracias por su compra</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

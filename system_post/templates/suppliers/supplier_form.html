@@ -1,0 +1,25 @@
+{% extends 'layouts/base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto animate-fade-in-up">
+    <h1 class="text-xl font-[var(--font-heading)] font-bold mb-6">{{ title }}</h1>
+    <div class="card">
+        <div class="card-body">
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                {% for field in form %}
+                <div>
+                    <label>{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}<p class="text-xs text-[var(--danger)] mt-1">{{ field.errors.0 }}</p>{% endif %}
+                </div>
+                {% endfor %}
+                <div class="flex justify-end gap-3 pt-4">
+                    <a href="{% url 'suppliers:supplier_list' %}" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
