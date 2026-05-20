@@ -1,4 +1,4 @@
-{% extends 'layouts/base.html' %}
+﻿{% extends 'layouts/base.html' %}
 {% load currency_tags %}
 {% block title %}{{ title }}{% endblock %}
 {% block content %}
@@ -124,8 +124,7 @@
                 <td class="font-mono text-xs text-[var(--text-secondary)]">{{ s.invoice_number }}</td>
                 <td>{{ s.client.name|default:'Invitado' }}</td>
                 <td class="hidden sm:table-cell text-[var(--text-secondary)]">{{ s.date|date:'d/m/Y H:i' }}</td>
-                <td class="hidden md:table-cell text-[var(--text-secondary)]">{{
-                    s.user.get_full_name|default:s.user.username }}</td>
+                <td class="hidden md:table-cell text-[var(--text-secondary)]">{{ s.user.get_full_name|default:s.user.username }}</td>
                 <td class="text-right font-semibold">{{ s.total|pesos }}</td>
             </tr>
             {% empty %}
