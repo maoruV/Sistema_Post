@@ -2,6 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
+from django.core.paginator import Paginator
 from .models import User
 from .forms import UserCreateForm, UserUpdateForm, LoginForm
 from .decorators import admin_required
@@ -34,8 +36,42 @@ def logout_view(request):
 @login_required
 @admin_required
 def user_list(request):
-    users = User.objects.all().order_by('-date_joined')
-    return render(request, 'accounts/user_list.html', {'users': users})
+    qs = User.objects.all().order_by('-date_joined')
+
+    q = request.GET.get('q', '').strip()
+    role = request.GET.get('role', '')
+    is_active = request.GET.get('is_active', '')
+
+    if q:
+        qs = qs.filter(
+            Q(username__icontains=q) |
+            Q(first_name__icontains=q) |
+            Q(last_name__icontains=q) |
+            Q(email__icontains=q) |
+            Q(role__icontains=q) |
+            Q(phone__icontains=q)
+        )
+    if role:
+        qs = qs.filter(role=role)
+    if is_active:
+        qs = qs.filter(is_active=(is_active == 'activo'))
+
+    paginator = Paginator(qs, 6)
+    page = request.GET.get('page', 1)
+    users_page = paginator.get_page(page)
+
+    if request.headers.get('HX-Request') == 'true':
+        return render(request, 'accounts/user_list_partial.html', {
+            'users': users_page, 'page_obj': users_page
+        })
+
+    return render(request, 'accounts/user_list.html', {
+        'users': users_page,
+        'page_obj': users_page,
+        'current_q': q,
+        'current_role': role,
+        'current_is_active': is_active,
+    })
 
 
 @login_required
