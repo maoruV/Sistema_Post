@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
+from django.db.models import Q
 from django.http import JsonResponse
 from .models import Client
 from .forms import ClientForm
@@ -10,11 +11,31 @@ from apps.accounts.decorators import role_required
 
 @login_required
 def client_list(request):
-    clients = Client.objects.all().order_by('name')
-    paginator = Paginator(clients, 6)
+    qs = Client.objects.all().order_by('name')
+
+    q = request.GET.get('q', '').strip()
+
+    if q:
+        qs = qs.filter(
+            Q(name__icontains=q) |
+            Q(phone__icontains=q) |
+            Q(cc__icontains=q)
+        )
+
+    paginator = Paginator(qs, 6)
     page = request.GET.get('page', 1)
     clients_page = paginator.get_page(page)
-    return render(request, 'clients/client_list.html', {'clients': clients_page, 'page_obj': clients_page})
+
+    if request.headers.get('HX-Request') == 'true':
+        return render(request, 'clients/client_list_partial.html', {
+            'clients': clients_page, 'page_obj': clients_page
+        })
+
+    return render(request, 'clients/client_list.html', {
+        'clients': clients_page,
+        'page_obj': clients_page,
+        'current_q': q,
+    })
 
 
 @login_required
