@@ -3,6 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.db.models import Q
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.views.decorators.http import require_POST
 from django.contrib.auth import get_user_model
@@ -21,14 +22,16 @@ from apps.accounts.decorators import role_required
 def sale_list(request):
     qs = Sale.objects.select_related('client', 'user').all().order_by('-date')
 
-    client_id = request.GET.get('client')
-    user_id = request.GET.get('user')
-    status = request.GET.get('status')
+    q = request.GET.get('q', '').strip()
+    status = request.GET.get('status', '')
 
-    if client_id:
-        qs = qs.filter(client_id=client_id)
-    if user_id:
-        qs = qs.filter(user_id=user_id)
+    if q:
+        qs = qs.filter(
+            Q(client__name__icontains=q) |
+            Q(user__first_name__icontains=q) |
+            Q(user__last_name__icontains=q) |
+            Q(user__username__icontains=q)
+        )
     if status:
         if status == 'cancelada':
             qs = qs.filter(is_active=False)
@@ -36,9 +39,6 @@ def sale_list(request):
             qs = qs.filter(is_active=True, status='pagada')
         elif status == 'pendiente':
             qs = qs.filter(is_active=True, status='pendiente')
-
-    clients = Client.objects.all().order_by('name')
-    users = User.objects.filter(is_active=True).order_by('username')
 
     paginator = Paginator(qs, 6)
     page = request.GET.get('page', 1)
@@ -49,9 +49,9 @@ def sale_list(request):
 
     return render(request, 'sales/sale_list.html', {
         'sales': sales_page,
-        'clients': clients,
-        'users': users,
         'page_obj': sales_page,
+        'current_q': q,
+        'current_status': status,
     })
 
 

@@ -7,29 +7,32 @@
     <a href="{% url 'sales:sale_new' %}" class="btn btn-primary btn-sm">+ Nueva Venta</a>
 </div>
 
-<div class="card mb-4">
-    <div class="card-body flex flex-wrap gap-3">
-    <select name="client" class="form-input w-auto min-w-[140px] text-sm filter-select"
-        hx-get="/sales/" hx-trigger="change" hx-target="#salesTableWrapper" hx-include=".filter-select">
-        <option value="">Todos los clientes</option>
-        {% for c in clients %}
-        <option value="{{ c.id }}" {% if request.GET.client == c.id|stringformat:'s' %}selected{% endif %}>{{ c.name }}</option>
-        {% endfor %}
-    </select>
-    <select name="user" class="form-input w-auto min-w-[140px] text-sm filter-select"
-        hx-get="/sales/" hx-trigger="change" hx-target="#salesTableWrapper" hx-include=".filter-select">
-        <option value="">Todos los vendedores</option>
-        {% for u in users %}
-        <option value="{{ u.id }}" {% if request.GET.user == u.id|stringformat:'s' %}selected{% endif %}>{{ u.get_full_name|default:u.username }}</option>
-        {% endfor %}
-    </select>
-    <select name="status" class="form-input w-auto min-w-[130px] text-sm filter-select"
-        hx-get="/sales/" hx-trigger="change" hx-target="#salesTableWrapper" hx-include=".filter-select">
-        <option value="">Todos los estados</option>
-        <option value="pagada" {% if request.GET.status == 'pagada' %}selected{% endif %}>Pagada</option>
-        <option value="pendiente" {% if request.GET.status == 'pendiente' %}selected{% endif %}>Pendiente</option>
-        <option value="cancelada" {% if request.GET.status == 'cancelada' %}selected{% endif %}>Cancelada</option>
-    </select>
+<div class="card mb-4 stagger">
+    <div class="card-header">
+        <span class="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Buscar y filtrar</span>
+    </div>
+    <div class="card-body">
+        <div class="flex flex-wrap gap-3">
+            <input type="text" name="q"
+                placeholder="Buscar por cliente o vendedor..."
+                value="{{ current_q }}"
+                class="form-input w-full sm:w-80 text-sm filter-control"
+                hx-get="{% url 'sales:sale_list' %}"
+                hx-trigger="keyup changed delay:300ms"
+                hx-target="#salesTableWrapper"
+                hx-include=".filter-control">
+            <select name="status"
+                class="form-input w-auto min-w-[130px] text-sm filter-control"
+                hx-get="{% url 'sales:sale_list' %}"
+                hx-trigger="change"
+                hx-target="#salesTableWrapper"
+                hx-include=".filter-control">
+                <option value="">Todos los estados</option>
+                <option value="pagada" {% if current_status == 'pagada' %}selected{% endif %}>Pagada</option>
+                <option value="pendiente" {% if current_status == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                <option value="cancelada" {% if current_status == 'cancelada' %}selected{% endif %}>Cancelada</option>
+            </select>
+        </div>
     </div>
 </div>
 

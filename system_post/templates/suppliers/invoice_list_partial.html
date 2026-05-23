@@ -1,0 +1,42 @@
+{% load currency_tags %}
+<div class="table-container stagger">
+    <table>
+        <thead>
+            <tr>
+                <th>Folio</th>
+                <th>Proveedor</th>
+                <th class="hidden sm:table-cell">Fecha</th>
+                <th class="text-right">Total</th>
+                <th class="text-center">Estado</th>
+                <th class="text-right">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for inv in invoices %}
+            <tr>
+                <td class="font-mono text-xs text-[var(--text-secondary)]">{{ inv.invoice_number }}</td>
+                <td>{{ inv.supplier.name }}</td>
+                <td class="hidden sm:table-cell text-[var(--text-secondary)]">{{ inv.date|date:'d/m/Y' }}</td>
+                <td class="text-right font-semibold">{{ inv.total|pesos }}</td>
+                <td class="text-center">
+                    <span class="badge 
+                        {% if inv.status == 'pagada' %}badge-emerald
+                        {% elif inv.status == 'cancelada' %}badge-red
+                        {% else %}badge-amber{% endif %}">
+                        {{ inv.get_status_display }}
+                    </span>
+                </td>
+                <td class="text-right">
+                    {% if user.can_update %}
+                    <a href="{% url 'suppliers:invoice_update' inv.pk %}" class="text-sm text-[var(--accent)] hover:underline mr-2">Editar</a>
+                    <a href="{% url 'suppliers:invoice_delete' inv.pk %}" class="text-sm text-[var(--danger)] hover:underline">Eliminar</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="empty-state">No hay facturas que coincidan con la búsqueda.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% include 'components/pagination.html' %}

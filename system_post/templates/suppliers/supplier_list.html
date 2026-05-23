@@ -1,4 +1,5 @@
 {% extends 'layouts/base.html' %}
+{% load currency_tags %}
 {% block title %}Proveedores{% endblock %}
 {% block content %}
 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 stagger">
@@ -7,36 +8,55 @@
     <a href="{% url 'suppliers:supplier_create' %}" class="btn btn-primary btn-sm">+ Nuevo Proveedor</a>
     {% endif %}
 </div>
-<div class="table-container stagger">
-    <table>
-        <thead>
-            <tr>
-                <th>Nombre</th>
-                <th class="hidden sm:table-cell">Contacto</th>
-                <th class="hidden md:table-cell">Email</th>
-                <th class="hidden lg:table-cell">Teléfono</th>
-                <th class="text-right">Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for s in suppliers %}
-            <tr>
-                <td class="font-medium">{{ s.name }}</td>
-                <td class="hidden sm:table-cell text-[var(--text-secondary)]">{{ s.contact_person|default:'—' }}</td>
-                <td class="hidden md:table-cell text-[var(--text-secondary)]">{{ s.email|default:'—' }}</td>
-                <td class="hidden lg:table-cell">{{ s.phone }}</td>
-                <td class="text-right">
-                    {% if user.can_update %}
-                    <a href="{% url 'suppliers:supplier_update' s.pk %}" class="text-sm text-[var(--accent)] hover:underline mr-2">Editar</a>
-                    <a href="{% url 'suppliers:supplier_delete' s.pk %}" class="text-sm text-[var(--danger)] hover:underline">Eliminar</a>
-                    {% endif %}
-                </td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="5" class="empty-state">No hay proveedores.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+
+<div class="card mb-4 stagger">
+    <div class="card-header">
+        <span class="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">Buscar</span>
+    </div>
+    <div class="card-body">
+        <input type="text" name="q"
+            placeholder="Buscar por nombre, contacto o teléfono..."
+            value="{{ current_q }}"
+            class="form-input w-full sm:w-80 text-sm filter-control"
+            hx-get="{% url 'suppliers:supplier_list' %}"
+            hx-trigger="keyup changed delay:300ms"
+            hx-target="#suppliersTableWrapper"
+            hx-include=".filter-control">
+    </div>
 </div>
-{% include 'components/pagination.html' %}
+
+<div id="suppliersTableWrapper">
+    <div class="table-container stagger">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th class="hidden sm:table-cell">Contacto</th>
+                    <th class="hidden md:table-cell">Email</th>
+                    <th class="hidden lg:table-cell">Teléfono</th>
+                    <th class="text-right">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in suppliers %}
+                <tr>
+                    <td class="font-medium">{{ s.name }}</td>
+                    <td class="hidden sm:table-cell text-[var(--text-secondary)]">{{ s.contact_person|default:'—' }}</td>
+                    <td class="hidden md:table-cell text-[var(--text-secondary)]">{{ s.email|default:'—' }}</td>
+                    <td class="hidden lg:table-cell">{{ s.phone }}</td>
+                    <td class="text-right">
+                        {% if user.can_update %}
+                        <a href="{% url 'suppliers:supplier_update' s.pk %}" class="text-sm text-[var(--accent)] hover:underline mr-2">Editar</a>
+                        <a href="{% url 'suppliers:supplier_delete' s.pk %}" class="text-sm text-[var(--danger)] hover:underline">Eliminar</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="empty-state">No hay proveedores.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% include 'components/pagination.html' %}
+</div>
 {% endblock %}
