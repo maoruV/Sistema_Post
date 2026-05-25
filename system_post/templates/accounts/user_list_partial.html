@@ -29,12 +29,13 @@
                     {% if u.is_active %}<span class="badge badge-emerald">Activo</span>
                     {% else %}<span class="badge badge-red">Inactivo</span>{% endif %}
                 </td>
-                <td class="text-right">
-                    <div class="flex justify-end gap-2">
-                        <a href="{% url 'accounts:user_update' u.pk %}" class="text-sm text-[var(--accent)] hover:underline">Editar</a>
-                        <a href="{% url 'accounts:user_delete' u.pk %}" class="text-sm text-[var(--danger)] hover:underline">Eliminar</a>
-                    </div>
-                </td>
+                    <td class="text-right">
+                        <div class="flex justify-end gap-2">
+                            <a href="{% url 'accounts:password_reset_admin' u.pk %}" class="text-sm text-[var(--accent)] hover:underline">Resetear</a>
+                            <a href="{% url 'accounts:user_update' u.pk %}" class="text-sm text-[var(--accent)] hover:underline">Editar</a>
+                            <a href="{% url 'accounts:user_delete' u.pk %}" class="text-sm text-[var(--danger)] hover:underline">Eliminar</a>
+                        </div>
+                    </td>
             </tr>
             {% empty %}
             <tr><td colspan="6" class="empty-state">No hay usuarios que coincidan con la búsqueda.</td></tr>

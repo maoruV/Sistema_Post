@@ -78,6 +78,7 @@
                     </td>
                     <td class="text-right">
                         <div class="flex justify-end gap-2">
+                            <a href="{% url 'accounts:password_reset_admin' u.pk %}" class="text-sm text-[var(--accent)] hover:underline">Resetear</a>
                             <a href="{% url 'accounts:user_update' u.pk %}" class="text-sm text-[var(--accent)] hover:underline">Editar</a>
                             <a href="{% url 'accounts:user_delete' u.pk %}" class="text-sm text-[var(--danger)] hover:underline">Eliminar</a>
                         </div>

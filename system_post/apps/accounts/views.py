@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.core.paginator import Paginator
 from .models import User
-from .forms import UserCreateForm, UserUpdateForm, LoginForm
+from .forms import UserCreateForm, UserUpdateForm, LoginForm, AdminPasswordResetForm
 from .decorators import admin_required
 
 
@@ -100,7 +100,7 @@ def user_update(request, pk):
             return redirect('accounts:user_list')
     else:
         form = UserUpdateForm(instance=user)
-    return render(request, 'accounts/user_form.html', {'form': form, 'title': 'Editar Usuario'})
+    return render(request, 'accounts/user_form.html', {'form': form, 'title': 'Editar Usuario', 'editing_user': user})
 
 
 @login_required
@@ -112,3 +112,19 @@ def user_delete(request, pk):
         messages.success(request, 'Usuario eliminado correctamente.')
         return redirect('accounts:user_list')
     return render(request, 'accounts/user_confirm_delete.html', {'user': user})
+
+
+@login_required
+@admin_required
+def admin_password_reset(request, pk):
+    user = get_object_or_404(User, pk=pk)
+    if request.method == 'POST':
+        form = AdminPasswordResetForm(request.POST)
+        if form.is_valid():
+            user.set_password(form.cleaned_data['password1'])
+            user.save()
+            messages.success(request, f'Contraseña de {user.username} restablecida correctamente.')
+            return redirect('accounts:user_list')
+    else:
+        form = AdminPasswordResetForm()
+    return render(request, 'accounts/admin_password_reset.html', {'form': form, 'user': user})
