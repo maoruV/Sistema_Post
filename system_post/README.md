@@ -7,6 +7,8 @@ Sistema de punto de venta (POS) completo con Django, Tailwind CSS, HTMX y Alpine
 - **Dashboard** con resumen de ventas, stock bajo, clientes, proveedores y ranking top 6 productos más vendidos
 - **Toast notifications** automáticos (5s) para errores y confirmaciones, visibles en toda la app
 - **Usuarios** CRUD con roles: admin, supervisor, usuario
+- **Recuperación de contraseña** administrador restablece contraseña de cualquier usuario desde el panel
+- **Toggle de visibilidad** en campos de contraseña (login, creación de usuario, reset por admin) con icono de ojo
 - **Inventario** con productos, categorías y alertas de stock mínimo
 - **Clientes** CRUD con facturas (pendiente/pagada/cancelada)
 - **Proveedores** CRUD con facturas (pendiente/pagada/cancelada)

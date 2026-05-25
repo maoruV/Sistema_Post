@@ -70,6 +70,7 @@ print('Seed data created')
 - **Currency**: `apps.core.templatetags.currency_tags` filter `|pesos` for COP formatting. Alpine uses `formatPeso()` JS function with `toLocaleString('es-CO')`.
 - **Toast messages**: Fixed bottom-center (`bottom-4 left-1/2 -translate-x-1/2 z-[100]`), auto-dismiss at 5s via Alpine `x-init`, close button `×`. Rendered for all users (not just authenticated) — gating removed so login errors display correctly.
 - **Login flow**: Custom `login_view` in `accounts.views`. Uses PRG pattern on failure: `messages.error()` + `return redirect('accounts:login')` to avoid form resubmission prompts and clear fields. `authenticate()` + `login()` on success → `core:dashboard`.
+- **Password reset (admin-mediated)**: Admin can reset any user's password via `accounts.views.admin_password_reset` (`@admin_required`). Uses `AdminPasswordResetForm` in `accounts.forms` (validates password match). URL: `users/<pk>/reset-password/`. Template: `accounts/admin_password_reset.html`.
 - **Dashboard ranking**: Card "Productos Más Vendidos" shows top 6 products by `SUM(quantity)` from `SaleItem`. Best-selling category displayed as a pill badge in the card header. Positions 1-3 use gold/silver/bronze gradient circles. Revenue column (`total_revenue`) only visible to `admin`/`supervisor` via `{% if user.is_admin or user.is_supervisor %}`.
 - **Report print**: "Imprimir" button in `reports/detail.html` hidden for `role='user'` via `{% if user.role != 'user' %}`.
 - **Report charts**: Two Chart.js graphs in `reports/detail.html`, visible only to `admin` (`{% if user.is_admin %}`). Doughnut chart (payment method distribution) and bar chart (daily sales totals). Data fetched client-side from `/reports/chart-data/?date_from=&date_to=` JSON endpoint. Endpoint uses `TruncDate` aggregation + `_get_sales_data` helper. Chart colors match theme (emerald/blue/purple for payment methods, copper `#d4834a` for daily bars). Tooltips formatted in COP.
@@ -83,6 +84,7 @@ print('Seed data created')
 - **Product search**: returns JSON when `?format=json` (for Alpine.js product filters), HTML partial for other requests.
 - **Reports/dashboard**: only count sales with `status='pagada'`. All date filters use `date__gte`/`date__lt` (sargable). Report page supports `preset=` (hoy/semana/mes) and custom `date_from=`/`date_to=` GET params. Charts endpoint `/reports/chart-data/` (admin-only) returns `payment_breakdown` + `daily_totals` for the given date range.
 - **Pagination**: `Paginator` at 25 items/page on all list views.
+- **Password toggle**: Password fields on login, user creation, and admin reset use Alpine.js `x-ref="pwd"` + `$refs.pwd.type` to toggle visibility. Eye icon SVGs toggle via `x-show` bound to `show` boolean in `x-data`.
 - **Indexes**: `db_index=True` on frequently filtered fields. Composite index `idx_sale_active_status_date` on Sale.
 - **Language**: es-es. Timezone: America/Mexico_City.
 
