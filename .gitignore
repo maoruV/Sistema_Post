@@ -1,0 +1,24 @@
+# Virtual environment
+.venv/
+
+# Agent / AI config
+.agents/
+skills-lock.json
+**/AGENTS.md
+
+# Python
+__pycache__/
+*.pyc
+
+# Database
+db.sqlite3
+
+# Media / uploads
+media/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
