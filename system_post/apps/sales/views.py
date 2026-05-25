@@ -155,7 +155,7 @@ def sale_complete(request):
 
     sale.subtotal = subtotal_sum
     apply_iva = data.get('apply_iva', False)
-    sale.tax = subtotal_sum * 0.16 if apply_iva else 0
+    sale.tax = subtotal_sum * 0.19 if apply_iva else 0
     sale.total = subtotal_sum + sale.tax
     if amount_received and payment_method == 'efectivo':
         amount_rec = float(amount_received)
@@ -289,7 +289,7 @@ def sale_edit_save(request, pk):
 
     sale.subtotal = float(sale.subtotal) + added_subtotal
     if sale.tax > 0:
-        sale.tax = sale.subtotal * 0.16
+        sale.tax = sale.subtotal * 0.19
         sale.total = sale.subtotal + sale.tax
     else:
         sale.tax = 0
