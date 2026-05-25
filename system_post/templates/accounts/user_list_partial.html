@@ -1,0 +1,46 @@
+{% load currency_tags %}
+<div class="table-container stagger">
+    <table>
+        <thead>
+            <tr>
+                <th>Usuario</th>
+                <th class="hidden md:table-cell">Nombre</th>
+                <th class="hidden sm:table-cell">Email</th>
+                <th>Rol</th>
+                <th class="hidden md:table-cell">Activo</th>
+                <th class="text-right">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in users %}
+            <tr>
+                <td class="font-medium">{{ u.username }}</td>
+                <td class="hidden md:table-cell text-[var(--text-secondary)]">{{ u.get_full_name|default:'—' }}</td>
+                <td class="hidden sm:table-cell text-[var(--text-secondary)]">{{ u.email|default:'—' }}</td>
+                <td>
+                    <span class="badge
+                        {% if u.role == 'admin' %}role-admin
+                        {% elif u.role == 'supervisor' %}badge-amber
+                        {% else %}badge-blue{% endif %}">
+                        {{ u.get_role_display }}
+                    </span>
+                </td>
+                <td class="hidden md:table-cell">
+                    {% if u.is_active %}<span class="badge badge-emerald">Activo</span>
+                    {% else %}<span class="badge badge-red">Inactivo</span>{% endif %}
+                </td>
+                    <td class="text-right">
+                        <div class="flex justify-end gap-2">
+                            <a href="{% url 'accounts:password_reset_admin' u.pk %}" class="text-sm text-[var(--accent)] hover:underline">Resetear</a>
+                            <a href="{% url 'accounts:user_update' u.pk %}" class="text-sm text-[var(--accent)] hover:underline">Editar</a>
+                            <a href="{% url 'accounts:user_delete' u.pk %}" class="text-sm text-[var(--danger)] hover:underline">Eliminar</a>
+                        </div>
+                    </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="empty-state">No hay usuarios que coincidan con la búsqueda.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% include 'components/pagination.html' %}

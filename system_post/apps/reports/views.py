@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum, Count
+from django.db.models.functions import TruncDate
 from django.core.paginator import Paginator
 from django.utils import timezone
 from django.http import JsonResponse
@@ -151,4 +152,41 @@ def report_data(request):
             'date': s.date.strftime('%d/%m/%Y %H:%M'),
             'user': s.user.get_full_name() or s.user.username if s.user else '',
         } for s in data['sales']],
+    })
+
+
+@login_required
+@role_required(allowed_roles=['admin'])
+def chart_data(request):
+    today = timezone.localdate()
+    date_from = request.GET.get('date_from', today.isoformat())
+    date_to = request.GET.get('date_to', today.isoformat())
+
+    try:
+        start = datetime.strptime(date_from, '%Y-%m-%d').date()
+        end = datetime.strptime(date_to, '%Y-%m-%d').date()
+    except ValueError:
+        start = end = today
+
+    data = _get_sales_data(start, end)
+
+    daily_raw = (
+        Sale.objects
+        .filter(is_active=True, status='pagada', date__gte=start, date__lt=end + timedelta(days=1))
+        .annotate(day=TruncDate('date'))
+        .values('day')
+        .annotate(total=Sum('total'), count=Count('id'))
+        .order_by('day')
+    )
+    daily_totals = [
+        {'date': d['day'].strftime('%Y-%m-%d'), 'total': float(d['total'] or 0), 'count': d['count']}
+        for d in daily_raw
+    ]
+
+    return JsonResponse({
+        'payment_breakdown': {
+            method: {'total': v['total'], 'count': v['count']}
+            for method, v in data['payment_breakdown'].items()
+        },
+        'daily_totals': daily_totals,
     })

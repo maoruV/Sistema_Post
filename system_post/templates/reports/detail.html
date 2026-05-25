@@ -1,4 +1,4 @@
-{% extends 'layouts/base.html' %}
+﻿{% extends 'layouts/base.html' %}
 {% load currency_tags %}
 {% block title %}{{ title }}{% endblock %}
 {% block content %}
@@ -106,6 +106,25 @@
         </div>
     </div>
 </div>
+{% if user.is_admin %}
+<div class="card mb-6 stagger">
+    <div class="card-header">
+        <h3 class="font-[var(--font-heading)] font-semibold text-sm">Distribución por Método de Pago</h3>
+    </div>
+    <div class="card-body" style="max-height:300px">
+        <canvas id="paymentChart"></canvas>
+    </div>
+</div>
+
+<div class="card mb-6 stagger">
+    <div class="card-header">
+        <h3 class="font-[var(--font-heading)] font-semibold text-sm">Ventas Diarias</h3>
+    </div>
+    <div class="card-body" style="max-height:350px">
+        <canvas id="dailyChart"></canvas>
+    </div>
+</div>
+{% endif %}
 
 <div class="table-container stagger">
     <table>
@@ -124,8 +143,7 @@
                 <td class="font-mono text-xs text-[var(--text-secondary)]">{{ s.invoice_number }}</td>
                 <td>{{ s.client.name|default:'Invitado' }}</td>
                 <td class="hidden sm:table-cell text-[var(--text-secondary)]">{{ s.date|date:'d/m/Y H:i' }}</td>
-                <td class="hidden md:table-cell text-[var(--text-secondary)]">{{
-                    s.user.get_full_name|default:s.user.username }}</td>
+                <td class="hidden md:table-cell text-[var(--text-secondary)]">{{ s.user.get_full_name|default:s.user.username }}</td>
                 <td class="text-right font-semibold">{{ s.total|pesos }}</td>
             </tr>
             {% empty %}
@@ -137,4 +155,117 @@
     </table>
 </div>
 {% include 'components/pagination.html' %}
+{% if user.is_admin %}
+<script>
+(function () {
+    var params = new URLSearchParams(window.location.search);
+    var dateFrom = params.get('date_from') || '';
+    var dateTo = params.get('date_to') || '';
+    var url = '{% url "reports:chart_data" %}' + '?date_from=' + encodeURIComponent(dateFrom) + '&date_to=' + encodeURIComponent(dateTo);
+
+    fetch(url)
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            var ctxPayment = document.getElementById('paymentChart');
+            if (ctxPayment) {
+                new Chart(ctxPayment, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Efectivo', 'Tarjeta', 'Transferencia'],
+                        datasets: [{
+                            data: [
+                                data.payment_breakdown.efectivo.total,
+                                data.payment_breakdown.tarjeta.total,
+                                data.payment_breakdown.transferencia.total
+                            ],
+                            backgroundColor: [
+                                'rgba(52,211,153,0.75)',
+                                'rgba(59,130,246,0.75)',
+                                'rgba(168,85,247,0.75)'
+                            ],
+                            borderColor: [
+                                'rgba(52,211,153,1)',
+                                'rgba(59,130,246,1)',
+                                'rgba(168,85,247,1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: '#938f8a' }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (ctx) {
+                                        var val = ctx.parsed;
+                                        return ' $' + val.toLocaleString('es-CO');
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            var ctxDaily = document.getElementById('dailyChart');
+            if (ctxDaily) {
+                var labels = data.daily_totals.map(function (d) {
+                    var parts = d.date.split('-');
+                    return parts[2] + '/' + parts[1];
+                });
+                var totals = data.daily_totals.map(function (d) { return d.total; });
+
+                new Chart(ctxDaily, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Total Ventas',
+                            data: totals,
+                            backgroundColor: 'rgba(212,131,74,0.6)',
+                            borderColor: 'rgba(212,131,74,1)',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function (ctx) {
+                                        return ' $' + ctx.parsed.y.toLocaleString('es-CO');
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: { color: '#938f8a' },
+                                grid: { color: 'rgba(147,143,138,0.1)' }
+                            },
+                            y: {
+                                ticks: {
+                                    color: '#938f8a',
+                                    callback: function (v) {
+                                        return '$' + v.toLocaleString('es-CO');
+                                    }
+                                },
+                                grid: { color: 'rgba(147,143,138,0.1)' }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+})();
+</script>
+{% endif %}
 {% endblock %}

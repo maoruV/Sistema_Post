@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import Supplier, SupplierInvoice
+from .utils import SupplierInvoiceCounter
 
 
 @admin.register(Supplier)
@@ -12,3 +13,8 @@ class SupplierAdmin(admin.ModelAdmin):
 class SupplierInvoiceAdmin(admin.ModelAdmin):
     list_display = ['invoice_number', 'supplier', 'date', 'total', 'status']
     list_filter = ['status', 'date']
+
+
+@admin.register(SupplierInvoiceCounter)
+class SupplierInvoiceCounterAdmin(admin.ModelAdmin):
+    list_display = ['prefix', 'counter']

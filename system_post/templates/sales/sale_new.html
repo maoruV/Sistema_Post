@@ -141,7 +141,7 @@
                         </div>
                         <label class="flex items-center gap-2 cursor-pointer pt-1">
                             <input type="checkbox" x-model="applyIva" class="w-4 h-4 rounded accent-[var(--accent)]">
-                            <span class="text-sm font-medium text-[var(--text-secondary)]">Aplicar IVA (16%)</span>
+                            <span class="text-sm font-medium text-[var(--text-secondary)]">Aplicar IVA (19%)</span>
                         </label>
                         <hr class="border-[var(--border-color)]">
                         <div class="flex justify-between items-baseline">
@@ -149,7 +149,7 @@
                             <span class="text-sm" x-text="itemCount()"></span>
                         </div>
                         <div x-show="applyIva" x-cloak class="flex justify-between items-baseline text-sm">
-                            <span class="text-[var(--text-secondary)]">IVA (16%)</span>
+                            <span class="text-[var(--text-secondary)]">IVA (19%)</span>
                             <span class="text-[var(--text-secondary)]"><span x-text="formatPeso(iva())"></span></span>
                         </div>
                         <div class="flex justify-between items-baseline">
@@ -238,7 +238,7 @@
                 return this.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
             },
             iva() {
-                return this.applyIva ? this.subtotal() * 0.16 : 0;
+                return this.applyIva ? this.subtotal() * 0.19 : 0;
             },
             totalWithIva() {
                 return this.subtotal() + this.iva();

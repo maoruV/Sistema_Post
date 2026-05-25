@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
+from django.db.models import Q
 from .models import Supplier, SupplierInvoice
 from .forms import SupplierForm, SupplierInvoiceForm
 from apps.accounts.decorators import role_required
@@ -9,11 +10,31 @@ from apps.accounts.decorators import role_required
 
 @login_required
 def supplier_list(request):
-    suppliers = Supplier.objects.all().order_by('name')
-    paginator = Paginator(suppliers, 6)
+    qs = Supplier.objects.all().order_by('name')
+
+    q = request.GET.get('q', '').strip()
+
+    if q:
+        qs = qs.filter(
+            Q(name__icontains=q) |
+            Q(contact_person__icontains=q) |
+            Q(phone__icontains=q)
+        )
+
+    paginator = Paginator(qs, 6)
     page = request.GET.get('page', 1)
     suppliers_page = paginator.get_page(page)
-    return render(request, 'suppliers/supplier_list.html', {'suppliers': suppliers_page, 'page_obj': suppliers_page})
+
+    if request.headers.get('HX-Request') == 'true':
+        return render(request, 'suppliers/supplier_list_partial.html', {
+            'suppliers': suppliers_page, 'page_obj': suppliers_page
+        })
+
+    return render(request, 'suppliers/supplier_list.html', {
+        'suppliers': suppliers_page,
+        'page_obj': suppliers_page,
+        'current_q': q,
+    })
 
 
 @login_required
@@ -58,11 +79,31 @@ def supplier_delete(request, pk):
 
 @login_required
 def invoice_list(request):
-    invoices = SupplierInvoice.objects.select_related('supplier').all().order_by('-date')
-    paginator = Paginator(invoices, 6)
+    qs = SupplierInvoice.objects.select_related('supplier').all().order_by('-date')
+
+    q = request.GET.get('q', '').strip()
+    status = request.GET.get('status', '')
+
+    if q:
+        qs = qs.filter(supplier__name__icontains=q)
+    if status:
+        qs = qs.filter(status=status)
+
+    paginator = Paginator(qs, 6)
     page = request.GET.get('page', 1)
     invoices_page = paginator.get_page(page)
-    return render(request, 'suppliers/invoice_list.html', {'invoices': invoices_page, 'page_obj': invoices_page})
+
+    if request.headers.get('HX-Request') == 'true':
+        return render(request, 'suppliers/invoice_list_partial.html', {
+            'invoices': invoices_page, 'page_obj': invoices_page
+        })
+
+    return render(request, 'suppliers/invoice_list.html', {
+        'invoices': invoices_page,
+        'page_obj': invoices_page,
+        'current_q': q,
+        'current_status': status,
+    })
 
 
 @login_required
