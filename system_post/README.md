@@ -132,7 +132,6 @@ system_post/
 ├── media/                      # Archivos subidos
 ├── manage.py
 ├── requirements.txt
-├── AGENTS.md                   # Instrucciones para asistentes IA
 └── README.md
 ```
 
